@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import "../Calculator/style.css";
+
 import { Alert, useAlert } from "../common/Alert";
 import history_icon from "../../assets/history_icon.svg";
 import calculator from "../../assets/calculator.svg";
 import axiosClient from "../../api/axiosClient";
+
+import "../Calculator/style.css";
 
 
 const Calculator = () => {

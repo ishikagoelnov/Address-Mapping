@@ -24,17 +24,24 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/routes", tags=["routes"])
 
 
-@router.post("/distance", response_model=Dict)
+@router.post(
+    "/distance", response_model=Dict,
+    summary="Calculate distance between two addresses",
+    description="""
+        Calculates the geographical distance between a source and destination address.
+        - Uses Nominatim OpenStreetMap API for geocoding
+        - Applies Haversine formula for distance calculation
+        - Stores the result in user history
+        - Returns both kilometers and miles
+    """,
+    response_description="Distance calculation result with unit conversion"
+    )
 @throttle(limit=10, window=60)
 async def distance_between_addresses(
     payload: DistanceRequest,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    """
-    Fetch the distance between source and destination in kilometer and
-    miles using nominatim open source api.
-    """
     try:
         # Get coordinates
         if settings.debug:
@@ -77,7 +84,17 @@ async def distance_between_addresses(
 
 
 
-@router.get("/history")
+@router.get(
+    "/history",
+    summary="Get paginated route history",
+    description="""
+        Retrieves paginated route history for the authenticated user.
+        Supports:
+        - Offset-based pagination
+        - Sorting by most recent routes
+        - Total record count
+    """,
+    response_description="Paginated route history list")
 def get_history(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -120,16 +137,25 @@ def get_history(
         raise HTTPException(status_code=500, detail="Failed to retrieve history")
 
 
-@router.post("/history-insights")
+@router.post(
+        "/history-insights", 
+        summary="Generate AI insights from route history",
+        description="""
+        Uses Retrieval-Augmented Generation (RAG) to answer user questions
+        based on their past route history.
+
+        Workflow:
+        - Builds or retrieves FAISS vector index from Redis
+        - Retrieves relevant past routes
+        - Uses LLM to generate contextual answer
+        - Maintains session-based chat memory
+        """,
+        response_description="AI-generated contextual insights")
 def history_insights(
     req: HistoryChatRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """
-        Fetches the history related insights and answer the user queries 
-        using the past data.
-    """
     try:
         cache_key = f"history_rag:{current_user.id}:{req.session_id}"
         index, texts = None, None

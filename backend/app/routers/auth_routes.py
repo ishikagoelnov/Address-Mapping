@@ -14,7 +14,19 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 log = logging.getLogger(__name__)
 
 
-@router.post("/signup")
+@router.post(
+    "/signup",
+    summary="Register a new user",
+    description="""
+        Creates a new user account.
+
+        Validations:
+        - Minimum password length: 6 characters
+        - Unique email enforcement
+        - Password hashing before storage
+    """,
+    response_description="User creation confirmation"
+    )
 def signup(payload: UserCreate, db: Session = Depends(get_db)):
     try:
         # Check minimum password length
@@ -76,7 +88,17 @@ def signup(payload: UserCreate, db: Session = Depends(get_db)):
         )
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    summary="Authenticate user and generate JWT token",
+    description="""
+        Authenticates a user using email and password.
+
+        - Verifies hashed password
+        - Generates JWT access token
+        - Returns bearer token for protected endpoints
+    """,
+    response_description="JWT access token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     try:
         email = form_data.username
