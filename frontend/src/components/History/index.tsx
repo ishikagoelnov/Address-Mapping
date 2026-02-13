@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import "./style.css";
 import { useEffect, useState } from "react";
 import axiosClient from '../../api/axiosClient';
-
+import { Alert, useAlert } from "../common/Alert";
 
 interface Message {
   id: string;
@@ -13,40 +13,65 @@ interface Message {
 
 function History() {
   const navigate = useNavigate();
-  useEffect(() => {
-    getHistory();
-  }, []);
 
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const itemsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(totalRecords / itemsPerPage);
+
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const { alert, showAlert, closeAlert } = useAlert();
+  const [sessionId] = useState(() => crypto.randomUUID());
 
-  const getHistory = async () => {
+  useEffect(() => {
+    getHistory(currentPage);
+  }, [currentPage]);
+
+  const getHistory = async (page = 1) => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please login first!");
-      return;
-    }
+    const offset = (page - 1) * itemsPerPage;
+
     try {
-      const historyData = await axiosClient.get(
-        "/nominatim/history",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setHistory(historyData.data);
+      const res = await axiosClient.get("/routes/history", {
+        params: { offset, limit: itemsPerPage },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setHistory(res.data.items);
+      setTotalRecords(res.data.total);
+
     } catch (err) {
-      console.error("Failed to fetch distance", err);
+      console.error("Failed to fetch history", err);
+      showAlert(
+        "Something went wrong.", "error",
+        "Failed to fetch history",
+      )
     }
   };
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleLogout = async() => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
 
   const toggleChat = () => {
-    setIsChatOpen(!isChatOpen);
+    if (isChatOpen) {
+      setMessages([]);
+    }
+    setIsChatOpen(prev => !prev);
   };
+
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -63,40 +88,42 @@ function History() {
     setIsTyping(true);
 
     const token = localStorage.getItem("token");
-    try{
+
+    try {
       const response = await axiosClient.post(
-        "/nominatim/history-insights",
-        {
-          question:userMessage.text
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response.data.answer,
-        isUser: false,
-        timestamp: new Date(),
+      "/routes/history-insights",
+      {
+        question: userMessage.text,
+        session_id: sessionId
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
       }
-      setMessages(prev=>[...prev, botResponse])
-    }
-    catch(error){
-      console.error("Chat error:", error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Sorry, something went wrong while contacting the AI assistant.",
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev=>[...prev, errorMessage])
-    }
-    finally{
+      );
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: response.data.answer,
+          isUser: false,
+          timestamp: new Date(),
+        }
+      ]);
+
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: "Sorry, something went wrong while contacting the AI assistant.",
+          isUser: false,
+          timestamp: new Date(),
+        }
+      ]);
+    } finally {
       setIsTyping(false);
     }
   };
-
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -105,21 +132,12 @@ function History() {
     }
   };
 
-  const itemsPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(history.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPageData = history.slice(startIndex, endIndex);
-
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  const startRecord = (currentPage - 1) * itemsPerPage + 1;
+  const endRecord = Math.min(currentPage * itemsPerPage, totalRecords);
 
   return (
     <div className="history-page">
+      <Alert alert={alert} onClose={closeAlert} />
       <div className="history-header">
         <div>
           <h1>Distance Calculator</h1>
@@ -127,12 +145,15 @@ function History() {
             Prototype web application for calculating the distance between addresses.
           </p>
         </div>
-        <button
-          className="back-button"
-          onClick={() => navigate("/calculator")}
-        >
-          Back to Calculator
-        </button>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="back-button" onClick={() => navigate("/calculator")}>
+            Back to Calculator
+          </button>
+          <button className="logout-button" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="history-card">
@@ -165,7 +186,7 @@ function History() {
                 </tr>
               </thead>
               <tbody>
-                {currentPageData.map((item: any, index) => (
+                {history.map((item, index) => (
                   <tr key={index}>
                     <td>{item.source}</td>
                     <td>{item.destination}</td>
@@ -184,17 +205,16 @@ function History() {
               >
                 ← Previous
               </button>
-
               <div className="pagination-numbers">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    className={`pagination-number ${currentPage === page ? "active" : ""}`}
-                    onClick={() => goToPage(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  className={`pagination-number ${currentPage === page ? "active" : ""}`}
+                  onClick={() => goToPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
               </div>
 
               <button
@@ -207,7 +227,7 @@ function History() {
             </div>
 
             <div className="pagination-info">
-              Showing {startIndex + 1} to {Math.min(endIndex, history.length)} of {history.length} results
+              Showing {startRecord} to {endRecord} of {totalRecords} results
             </div>
           </>
         )}

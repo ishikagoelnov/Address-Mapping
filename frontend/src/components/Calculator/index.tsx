@@ -44,7 +44,7 @@ const Calculator = () => {
     try {
       setLoading(true);
       const response = await axiosClient.post(
-        "/nominatim/distance",
+        "/routes/distance",
         {source, destination, unit},
         {
           headers: {
@@ -65,6 +65,11 @@ const Calculator = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
   };
 
   const formattedDistance = () => {
@@ -92,10 +97,15 @@ const Calculator = () => {
               </p>
             </div>
 
-            <button className="history-btn" onClick={() => navigate("/history")}>
-              View Historical Queries
-              <img src={history_icon} alt="history" />
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="history-btn" onClick={() => navigate("/history")}>
+                View Historical Queries
+                <img src={history_icon} alt="history" />
+              </button>
+              <button className="logout-btn" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
           </div>
 
           <div className="card">

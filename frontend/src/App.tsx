@@ -4,14 +4,37 @@ import SignupPage from "./pages/Signup";
 import CalculatorPage from "./pages/Calculator";
 import HistoryPage from "./pages/History";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import GuestOnlyRoute from "./routes/GuestOnlyRoutes";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        {/* Guest only routes */}
+        <Route path="/"
+          element={
+            <GuestOnlyRoute>
+              <LoginPage />
+            </GuestOnlyRoute>
+          }
+        />
+
+        <Route path="/login"
+          element={
+            <GuestOnlyRoute>
+              <LoginPage />
+            </GuestOnlyRoute>
+          }
+        />
+
+        <Route path="/signup"
+          element={
+            <GuestOnlyRoute>
+              <SignupPage />
+            </GuestOnlyRoute>
+          }
+        />
+
         {/* Protected */}
         <Route path="/calculator" 
           element={

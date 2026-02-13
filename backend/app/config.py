@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     debug: bool = False
     cors_origins: str = ""
     groq_api_key: str
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    secret_key: str
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
@@ -27,8 +30,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 redis_client = redis.Redis(
-    host="localhost",
-    port=6379,
+    host=settings.redis_host,
+    port=settings.redis_port,
     db=0,
-    decode_responses=True
+    decode_responses=False
 )

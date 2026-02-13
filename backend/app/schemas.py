@@ -1,6 +1,5 @@
-from pydantic import BaseModel, EmailStr
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -24,3 +23,4 @@ class DistanceRequest(BaseModel):
 
 class HistoryChatRequest(BaseModel):
     question: str
+    session_id:str

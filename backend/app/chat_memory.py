@@ -1,4 +1,5 @@
-# chat_memory.py
-from collections import defaultdict
+from typing import Dict, List
 
-chat_memory_store = defaultdict(list)
+MAX_MEMORY = 12
+
+chat_memory_store: Dict[str, Dict[str, List[Dict]]] = {}

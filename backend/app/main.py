@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import *
-from app.routers import nominatim, auth_routes
+from app.routers import address_routes, auth_routes
 
 app = FastAPI()
 app.add_middleware(
@@ -12,7 +12,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth_routes.router)
-app.include_router(nominatim.router)
+app.include_router(address_routes.router)
 
 @app.get("/")
 async def root():

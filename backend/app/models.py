@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import Column, DateTime, Float, Integer, String, ForeignKey, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from app.database import Base
 
 class User(Base):
@@ -17,6 +17,12 @@ class User(Base):
         "History", back_populates="user",
         cascade="all, delete-orphan"
     )
+
+    @validates('password')
+    def validate_password(self, key, value):
+        if len(value) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        return value
 
 class History(Base):
     __tablename__ = 'route_history'
