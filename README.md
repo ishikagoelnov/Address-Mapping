@@ -135,7 +135,7 @@ A full-stack delivery application that calculates distances between addresses, m
 ### 📊 Route History
 - **Comprehensive Logging**: All calculations saved to database
 - **User Isolation**: Each user sees only their own history
-- **Pagination**: 5 results per page
+- **Pagination**: 10 results per page
 - **Timestamp Tracking**: Full audit trail of queries
 
 ### 🤖 AI-Powered Insights
@@ -170,7 +170,7 @@ A full-stack delivery application that calculates distances between addresses, m
 - **CSS3** - Modern styling with gradients
 
 ### Infrastructure
-- **PostgreSQL 15** - Relational database
+- **PostgreSQL 17** - Relational database
 - **Redis 7** - In-memory cache
 - **Docker** - Containerization
 - **Docker Compose** - Multi-container orchestration
