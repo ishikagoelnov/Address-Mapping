@@ -401,7 +401,7 @@ CREATE INDEX idx_route_history_created_at ON route_history(created_at);
 - **Memory Usage**: Minimal (Redis stores only computed distances)
 
 ### Database Optimization
-- **Indexes**: On `user_id` and `created_at` columns
+- **Indexes**: Implemented indexes on some columns
 - **Connection Pooling**: Reuses database connections
 - **Query Optimization**: SELECT only required columns
 
